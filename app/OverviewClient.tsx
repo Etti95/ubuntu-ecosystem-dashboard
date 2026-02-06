@@ -4,7 +4,7 @@ import { DashboardOverview } from '@/types'
 import KPICard from '@/components/KPICard'
 import HealthScoreGauge from '@/components/HealthScoreGauge'
 import RefreshButton from '@/components/RefreshButton'
-import { IssuesOpenedClosedChart, SentimentTrendChart } from '@/components/Charts'
+import { IssuesOpenedClosedChart } from '@/components/Charts'
 
 interface OverviewClientProps {
   initialData: Partial<DashboardOverview>
@@ -20,9 +20,6 @@ export default function OverviewClient({ initialData }: OverviewClientProps) {
   const issuesClosed7d = github?.totalClosedLast7d ?? 0
   const medianResponse = github?.overallMedianFirstResponseHours
     ? `${Math.round(github.overallMedianFirstResponseHours)}h`
-    : 'N/A'
-  const sentiment = community?.overallSentiment
-    ? community.overallSentiment.toFixed(2)
     : 'N/A'
   const topComplaint = community?.topComplaintCategory
     ? community.topComplaintCategory.replace(/_/g, ' ')
@@ -87,39 +84,20 @@ export default function OverviewClient({ initialData }: OverviewClientProps) {
                 subtitle="Time to first response (30d)"
               />
               <KPICard
-                title="Community Sentiment"
-                value={sentiment}
-                subtitle={
-                  community?.reddit?.available
-                    ? 'Average from Reddit posts'
-                    : 'Reddit data unavailable'
-                }
-              />
-              <KPICard
                 title="Top Complaint Category"
                 value={topComplaint}
                 subtitle="Most frequent topic (30d)"
-                className="col-span-2"
               />
             </div>
           </div>
 
           {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {github?.aggregatedDailyStats && (
-              <IssuesOpenedClosedChart
-                data={github.aggregatedDailyStats}
-                title="Issues Opened vs Closed (30 days)"
-              />
-            )}
-
-            {community?.reddit?.dailySentiment && (
-              <SentimentTrendChart
-                data={community.reddit.dailySentiment}
-                title="Community Sentiment Trend"
-              />
-            )}
-          </div>
+          {github?.aggregatedDailyStats && (
+            <IssuesOpenedClosedChart
+              data={github.aggregatedDailyStats}
+              title="Issues Opened vs Closed (30 days)"
+            />
+          )}
 
           {/* Repository Summary */}
           {github?.repoSummaries && (
