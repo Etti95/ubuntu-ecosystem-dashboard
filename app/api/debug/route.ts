@@ -4,13 +4,21 @@ import { isUsingMemoryStore } from '@/lib/store'
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
+  const hasStandardUrl = !!process.env.KV_REST_API_URL
+  const hasStandardToken = !!process.env.KV_REST_API_TOKEN
+  const hasPrefixedUrl = !!process.env.CRON_SECRET_KV_REST_API_URL
+  const hasPrefixedToken = !!process.env.CRON_SECRET_KV_REST_API_TOKEN
+
   return NextResponse.json({
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV,
     vercelEnv: process.env.VERCEL_ENV,
     kvConfigured: {
-      hasUrl: !!process.env.KV_REST_API_URL,
-      hasToken: !!process.env.KV_REST_API_TOKEN,
+      hasStandardUrl,
+      hasStandardToken,
+      hasPrefixedUrl,
+      hasPrefixedToken,
+      effectivelyConfigured: (hasStandardUrl && hasStandardToken) || (hasPrefixedUrl && hasPrefixedToken),
     },
     usingMemoryStore: isUsingMemoryStore(),
     message: isUsingMemoryStore()

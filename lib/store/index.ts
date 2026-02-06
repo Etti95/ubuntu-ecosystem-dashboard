@@ -1,11 +1,34 @@
-import { kv } from '@vercel/kv'
+import { kv, createClient } from '@vercel/kv'
 
 // In-memory store for local development when KV is not configured
 const memoryStore = new Map<string, string>()
 
+// Get KV URL and token, checking multiple possible env var names
+function getKVConfig(): { url: string; token: string } | null {
+  const url = process.env.KV_REST_API_URL || process.env.CRON_SECRET_KV_REST_API_URL
+  const token = process.env.KV_REST_API_TOKEN || process.env.CRON_SECRET_KV_REST_API_TOKEN
+
+  if (url && token) {
+    return { url, token }
+  }
+  return null
+}
+
 // Check if KV is properly configured
 function isKVConfigured(): boolean {
-  return !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
+  return getKVConfig() !== null
+}
+
+// Create KV client with the available config
+function getKVClient() {
+  const config = getKVConfig()
+  if (config) {
+    return createClient({
+      url: config.url,
+      token: config.token,
+    })
+  }
+  return kv // fallback to default (won't work without env vars)
 }
 
 export interface KVStore {
@@ -16,9 +39,11 @@ export interface KVStore {
 }
 
 class VercelKVStore implements KVStore {
+  private client = getKVClient()
+
   async get<T>(key: string): Promise<T | null> {
     try {
-      return await kv.get<T>(key)
+      return await this.client.get<T>(key)
     } catch (error) {
       console.error(`KV get error for key ${key}:`, error)
       return null
@@ -28,9 +53,9 @@ class VercelKVStore implements KVStore {
   async set<T>(key: string, value: T, options?: { ex?: number }): Promise<void> {
     try {
       if (options?.ex) {
-        await kv.set(key, value, { ex: options.ex })
+        await this.client.set(key, value, { ex: options.ex })
       } else {
-        await kv.set(key, value)
+        await this.client.set(key, value)
       }
     } catch (error) {
       console.error(`KV set error for key ${key}:`, error)
@@ -40,7 +65,7 @@ class VercelKVStore implements KVStore {
 
   async del(key: string): Promise<void> {
     try {
-      await kv.del(key)
+      await this.client.del(key)
     } catch (error) {
       console.error(`KV del error for key ${key}:`, error)
     }
@@ -48,7 +73,7 @@ class VercelKVStore implements KVStore {
 
   async keys(pattern: string): Promise<string[]> {
     try {
-      return await kv.keys(pattern)
+      return await this.client.keys(pattern)
     } catch (error) {
       console.error(`KV keys error for pattern ${pattern}:`, error)
       return []
