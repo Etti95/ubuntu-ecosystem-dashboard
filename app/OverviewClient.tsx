@@ -5,7 +5,6 @@ import KPICard from '@/components/KPICard'
 import HealthScoreGauge from '@/components/HealthScoreGauge'
 import RefreshButton from '@/components/RefreshButton'
 import { IssuesOpenedClosedChart, SentimentTrendChart } from '@/components/Charts'
-import { isUsingMemoryStore } from '@/lib/store'
 
 interface OverviewClientProps {
   initialData: Partial<DashboardOverview>
@@ -43,20 +42,6 @@ export default function OverviewClient({ initialData }: OverviewClientProps) {
         </div>
         <RefreshButton metadata={refresh || null} />
       </div>
-
-      {/* Memory store warning */}
-      {isUsingMemoryStore() && (
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-          <div className="flex">
-            <div className="ml-3">
-              <p className="text-sm text-yellow-700">
-                <strong>Development Mode:</strong> Using in-memory storage. Data
-                will be lost on restart. Configure Vercel KV for persistence.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* No data state */}
       {!hasData && (
