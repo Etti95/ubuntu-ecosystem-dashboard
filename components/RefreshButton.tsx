@@ -14,28 +14,35 @@ export default function RefreshButton({
 }: RefreshButtonProps) {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [statusMessage, setStatusMessage] = useState<string | null>(null)
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
     setError(null)
+    setStatusMessage('Starting refresh...')
 
     try {
       const response = await fetch('/api/refresh', { method: 'POST' })
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Refresh failed')
+        throw new Error(data.error || data.message || 'Refresh failed')
       }
+
+      setStatusMessage(`Refresh completed: ${data.status || 'ok'}`)
 
       if (onRefreshComplete) {
         onRefreshComplete()
       }
 
-      // Force page reload to get fresh data
-      window.location.reload()
+      // Wait a moment to show success, then reload
+      setTimeout(() => {
+        window.location.reload()
+      }, 1000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Refresh failed')
-    } finally {
+      const errorMsg = err instanceof Error ? err.message : 'Refresh failed'
+      setError(errorMsg)
+      setStatusMessage(null)
       setIsRefreshing(false)
     }
   }
@@ -106,6 +113,10 @@ export default function RefreshButton({
           </span>
         )}
       </div>
+
+      {statusMessage && !error && (
+        <div className="text-sm text-green-600">{statusMessage}</div>
+      )}
 
       {error && <div className="text-sm text-red-600">{error}</div>}
 

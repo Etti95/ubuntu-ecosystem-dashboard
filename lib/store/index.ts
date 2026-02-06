@@ -34,7 +34,7 @@ class VercelKVStore implements KVStore {
       }
     } catch (error) {
       console.error(`KV set error for key ${key}:`, error)
-      throw error
+      // Don't throw - just log the error so refresh can continue
     }
   }
 
